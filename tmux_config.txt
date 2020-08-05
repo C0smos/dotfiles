@@ -1,0 +1,72 @@
+set -g default-terminal "screen-256color"
+
+set -g prefix C-s
+unbind-key C-b
+bind-key C-a send-prefix
+
+# start window numbers at 1 to match keyboard order with tmux window order
+set -g base-index 1
+set-window-option -g pane-base-index 1
+
+# renumber windows sequentially after closing any of them
+set -g renumber-windows on
+
+# soften status bar color from harsh green to light gray
+set -g status-bg default
+set -g status-fg colour244
+
+# Active Window
+#set-window-option -g window-status-current-fg colour166 #orange
+# set-window-option -g window-status-current-bg default
+
+# remove administrative debris (session name, hostname, time) in status bar
+set -g status-left ''
+set -g status-right ''
+
+# increase scrollback lines
+set -g history-limit 10000
+
+# prefix -> back-one-character
+bind-key C-b send-prefix
+# prefix-2 -> forward-incremental-history-search
+bind-key C-s send-prefix -2
+
+# show host name and IP address on left side of status bar
+set -g status-left-length 70
+set -g status-left "#[fg=yellow]Remote #[fg=green]#h : #[fg=brightblue]#(ip addr show dev eth0 | grep "inet[^6]" | awk '{print $2}') "
+
+# show session name, window & pane number, date and time on right side of
+# status bar
+set -g status-right-length 60
+set -g status-right "#[fg=blue]#S #I:#P #[fg=green]%k:%M:%S (#(date -u | awk '{print $4}') UTC)"
+
+setw -g window-status-current-style fg=red,bg=black
+
+# Define variables used below
+color_status_text="colour245"
+color_window_off_status_bg="colour238"
+color_light="white" #colour015
+color_dark="colour232" # black= colour232
+color_window_off_status_current_bg="colour254"
+
+# Add remote tmux toggle
+bind -T root F12  \
+  set prefix None \;\
+  set key-table off \;\
+  set status-style "fg=$color_status_text,bg=$color_window_off_status_bg" \;\
+  set window-status-current-format "#[fg=$color_window_off_status_bg,bg=$color_window_off_status_current_bg]$separator_powerline_right#[default] #I:#W# #[fg=$color_window_off_status_current_bg,bg=$color_window_off_status_bg]$separator_powerline_right#[default]" \;\
+  set window-status-current-style "fg=$color_dark,bold,bg=$color_window_off_status_current_bg" \;\
+  if -F '#{pane_in_mode}' 'send-keys -X cancel' \;\
+  refresh-client -S \;\
+
+bind -T off F12 \
+  set -u prefix \;\
+  set -u key-table \;\
+  set -u status-style \;\
+  set -u window-status-current-style \;\
+  set -u window-status-current-format \;\
+  refresh-client -S
+
+wg_is_keys_off="#[fg=$color_light,bg=$color_window_off_indicator]#([ $(tmux show-option -qv key-table) = 'off' ] && echo 'OFF')#[default]"
+
+set -g status-right "$wg_is_keys_off #{sysstat_cpu} | #{sysstat_mem} | #{sysstat_loadavg} | $wg_user_host"
